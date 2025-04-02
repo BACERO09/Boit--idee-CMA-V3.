@@ -14,13 +14,78 @@
     </style>
 </head>
 <body>
-    <!-- Page de connexion -->
+    <!-- Page utilisateur (tous les utilisateurs peuvent soumettre des idées) -->
+    <h1>Boîte à Idées - CMA Industry</h1>
+    <h2>Soumettre une idée</h2>
+    <textarea id="ideaInput" placeholder="Déposez votre idée ici..." rows="4" cols="50"></textarea>
+    <br>
+    <button onclick="submitIdea()">Soumettre</button>
+
+    <h2>Indicateurs d'Efficacité</h2>
+    <div class="stats">Total d'idées soumises : <span id="totalIdeas">0</span></div>
+
+    <br><br>
+
+    <!-- Page de connexion pour l'historique (accessible uniquement par l'administrateur) -->
     <div id="loginPage">
         <h1>Connexion Administrateur</h1>
         <input type="password" id="password" placeholder="Mot de passe" />
         <button onclick="login()">Se connecter</button>
     </div>
 
-    <!-- Page principale avec boîte à idées -->
     <div id="adminPage">
-        <h1>Boîte à Idées
+        <h2>Historique des Idées</h2>
+        <div id="ideas"></div>
+    </div>
+
+    <script>
+        const correctPassword = "tonMotDePasse";  // Remplace par ton mot de passe
+        let ideas = JSON.parse(localStorage.getItem('ideas')) || [];
+
+        // Fonction de soumission d'idée par les utilisateurs
+        function submitIdea() {
+            let ideaText = document.getElementById('ideaInput').value.trim();
+            if (ideaText) {
+                let idea = { text: ideaText, date: new Date().toLocaleString() };
+                ideas.push(idea);
+                localStorage.setItem('ideas', JSON.stringify(ideas));
+                document.getElementById('ideaInput').value = '';
+                displayIdeaCount();
+            }
+        }
+
+        // Fonction pour afficher le nombre d'idées soumises
+        function displayIdeaCount() {
+            document.getElementById('totalIdeas').innerText = ideas.length;
+        }
+
+        // Fonction de connexion pour l'administrateur
+        function login() {
+            const enteredPassword = document.getElementById('password').value;
+            if (enteredPassword === correctPassword) {
+                // Connexion réussie, cacher la page de connexion et afficher l'administration
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('adminPage').style.display = 'block';
+                displayIdeas();
+            } else {
+                alert("Mot de passe incorrect");
+            }
+        }
+
+        // Fonction pour afficher l'historique des idées
+        function displayIdeas() {
+            let ideasDiv = document.getElementById('ideas');
+            ideasDiv.innerHTML = '';
+            ideas.forEach(idea => {
+                let div = document.createElement('div');
+                div.classList.add('idea');
+                div.innerHTML = `<strong>Soumis le :</strong> ${idea.date}<br>${idea.text}`;
+                ideasDiv.appendChild(div);
+            });
+        }
+
+        // Affichage initial des idées soumises
+        displayIdeaCount();
+    </script>
+</body>
+</html>
