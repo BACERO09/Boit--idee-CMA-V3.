@@ -67,13 +67,16 @@
                 const idea = { text: ideaText, date: new Date().toLocaleString() };
                 db.collection("ideas").add(idea)  // Ajouter l'idée dans Firestore
                     .then(() => {
-                        document.getElementById('ideaInput').value = '';
+                        document.getElementById('ideaInput').value = ''; // Clear the input
                         alert("Idée soumise !");
                         displayIdeas();  // Actualiser les idées
                     })
                     .catch((error) => {
                         console.error("Erreur lors de la soumission de l'idée: ", error);
+                        alert("Une erreur est survenue. Réessayez plus tard.");
                     });
+            } else {
+                alert("Veuillez entrer une idée avant de soumettre.");
             }
         }
 
@@ -82,6 +85,9 @@
             db.collection("ideas").get()
                 .then(querySnapshot => {
                     document.getElementById('totalIdeas').innerText = querySnapshot.size;
+                })
+                .catch((error) => {
+                    console.error("Erreur lors du chargement du nombre d'idées : ", error);
                 });
         }
 
@@ -102,15 +108,19 @@
         function displayIdeas() {
             const ideasDiv = document.getElementById('ideas');
             ideasDiv.innerHTML = '';
-            db.collection("ideas").get().then(querySnapshot => {
-                querySnapshot.forEach(doc => {
-                    const idea = doc.data();
-                    const div = document.createElement('div');
-                    div.classList.add('idea');
-                    div.innerHTML = `<strong>Soumis le :</strong> ${idea.date}<br>${idea.text}`;
-                    ideasDiv.appendChild(div);
+            db.collection("ideas").get()
+                .then(querySnapshot => {
+                    querySnapshot.forEach(doc => {
+                        const idea = doc.data();
+                        const div = document.createElement('div');
+                        div.classList.add('idea');
+                        div.innerHTML = `<strong>Soumis le :</strong> ${idea.date}<br>${idea.text}`;
+                        ideasDiv.appendChild(div);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Erreur lors du chargement des idées : ", error);
                 });
-            });
         }
 
         // Affichage initial des idées soumises
