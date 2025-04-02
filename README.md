@@ -6,7 +6,7 @@
     <title>Boîte à Idées - CMA Industry</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        #ideas { margin-top: 20px; display: none; }
+        #ideas { margin-top: 20px; }
         .idea { border-bottom: 1px solid #ccc; padding: 10px; }
         .stats { margin-top: 20px; }
         #loginPage { display: block; }
@@ -38,25 +38,51 @@
         <div id="ideas"></div>
     </div>
 
+    <!-- Ajouter Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    
     <script>
+        // Configuration Firebase pour ton projet
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXXXXXXXXXXXXXXXXXXXXXXX",  // Remplace par ta clé API Firebase
+            authDomain: "boite-a-idee-cma.firebaseapp.com",
+            projectId: "boite-a-idee-cma",
+            storageBucket: "boite-a-idee-cma.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abc123def456ghi789",
+            measurementId: "G-XYZ1234ABC"
+        };
+
+        // Initialiser Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         const correctPassword = "tonMotDePasse";  // Remplace par ton mot de passe
-        let ideas = JSON.parse(localStorage.getItem('ideas')) || [];
 
         // Fonction de soumission d'idée par les utilisateurs
         function submitIdea() {
             let ideaText = document.getElementById('ideaInput').value.trim();
             if (ideaText) {
-                let idea = { text: ideaText, date: new Date().toLocaleString() };
-                ideas.push(idea);
-                localStorage.setItem('ideas', JSON.stringify(ideas));
-                document.getElementById('ideaInput').value = '';
-                displayIdeaCount();
+                const idea = { text: ideaText, date: new Date().toLocaleString() };
+                db.collection("ideas").add(idea)  // Ajouter l'idée dans Firestore
+                    .then(() => {
+                        document.getElementById('ideaInput').value = '';
+                        alert("Idée soumise !");
+                        displayIdeas();  // Actualiser les idées
+                    })
+                    .catch((error) => {
+                        console.error("Erreur lors de la soumission de l'idée: ", error);
+                    });
             }
         }
 
         // Fonction pour afficher le nombre d'idées soumises
         function displayIdeaCount() {
-            document.getElementById('totalIdeas').innerText = ideas.length;
+            db.collection("ideas").get()
+                .then(querySnapshot => {
+                    document.getElementById('totalIdeas').innerText = querySnapshot.size;
+                });
         }
 
         // Fonction de connexion pour l'administrateur
@@ -74,13 +100,16 @@
 
         // Fonction pour afficher l'historique des idées
         function displayIdeas() {
-            let ideasDiv = document.getElementById('ideas');
+            const ideasDiv = document.getElementById('ideas');
             ideasDiv.innerHTML = '';
-            ideas.forEach(idea => {
-                let div = document.createElement('div');
-                div.classList.add('idea');
-                div.innerHTML = `<strong>Soumis le :</strong> ${idea.date}<br>${idea.text}`;
-                ideasDiv.appendChild(div);
+            db.collection("ideas").get().then(querySnapshot => {
+                querySnapshot.forEach(doc => {
+                    const idea = doc.data();
+                    const div = document.createElement('div');
+                    div.classList.add('idea');
+                    div.innerHTML = `<strong>Soumis le :</strong> ${idea.date}<br>${idea.text}`;
+                    ideasDiv.appendChild(div);
+                });
             });
         }
 
