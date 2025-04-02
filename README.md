@@ -38,11 +38,12 @@
         <div id="ideas"></div>
     </div>
 
-    <!-- Ajouter Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    
-    <script>
+    <!-- Ajouter Firebase (modulaire) -->
+    <script type="module">
+        // Importation des modules Firebase nécessaires
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
         // Configuration Firebase pour ton projet
         const firebaseConfig = {
             apiKey: "AIzaSyDXXXXXXXXXXXXXXXXXXXXXXX",  // Remplace par ta clé API Firebase
@@ -55,40 +56,38 @@
         };
 
         // Initialiser Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         const correctPassword = "tonMotDePasse";  // Remplace par ton mot de passe
 
         // Fonction de soumission d'idée par les utilisateurs
-        function submitIdea() {
+        async function submitIdea() {
             let ideaText = document.getElementById('ideaInput').value.trim();
             if (ideaText) {
                 const idea = { text: ideaText, date: new Date().toLocaleString() };
-                db.collection("ideas").add(idea)  // Ajouter l'idée dans Firestore
-                    .then(() => {
-                        document.getElementById('ideaInput').value = ''; // Clear the input
-                        alert("Idée soumise !");
-                        displayIdeas();  // Actualiser les idées
-                    })
-                    .catch((error) => {
-                        console.error("Erreur lors de la soumission de l'idée: ", error);
-                        alert("Une erreur est survenue. Réessayez plus tard.");
-                    });
+                try {
+                    await addDoc(collection(db, "ideas"), idea);
+                    document.getElementById('ideaInput').value = ''; // Clear the input
+                    alert("Idée soumise !");
+                    displayIdeas();  // Actualiser les idées
+                } catch (error) {
+                    console.error("Erreur lors de la soumission de l'idée: ", error);
+                    alert("Une erreur est survenue. Réessayez plus tard.");
+                }
             } else {
                 alert("Veuillez entrer une idée avant de soumettre.");
             }
         }
 
         // Fonction pour afficher le nombre d'idées soumises
-        function displayIdeaCount() {
-            db.collection("ideas").get()
-                .then(querySnapshot => {
-                    document.getElementById('totalIdeas').innerText = querySnapshot.size;
-                })
-                .catch((error) => {
-                    console.error("Erreur lors du chargement du nombre d'idées : ", error);
-                });
+        async function displayIdeaCount() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "ideas"));
+                document.getElementById('totalIdeas').innerText = querySnapshot.size;
+            } catch (error) {
+                console.error("Erreur lors du chargement du nombre d'idées : ", error);
+            }
         }
 
         // Fonction de connexion pour l'administrateur
@@ -105,22 +104,21 @@
         }
 
         // Fonction pour afficher l'historique des idées
-        function displayIdeas() {
+        async function displayIdeas() {
             const ideasDiv = document.getElementById('ideas');
             ideasDiv.innerHTML = '';
-            db.collection("ideas").get()
-                .then(querySnapshot => {
-                    querySnapshot.forEach(doc => {
-                        const idea = doc.data();
-                        const div = document.createElement('div');
-                        div.classList.add('idea');
-                        div.innerHTML = `<strong>Soumis le :</strong> ${idea.date}<br>${idea.text}`;
-                        ideasDiv.appendChild(div);
-                    });
-                })
-                .catch((error) => {
-                    console.error("Erreur lors du chargement des idées : ", error);
+            try {
+                const querySnapshot = await getDocs(collection(db, "ideas"));
+                querySnapshot.forEach(doc => {
+                    const idea = doc.data();
+                    const div = document.createElement('div');
+                    div.classList.add('idea');
+                    div.innerHTML = `<strong>Soumis le :</strong> ${idea.date}<br>${idea.text}`;
+                    ideasDiv.appendChild(div);
                 });
+            } catch (error) {
+                console.error("Erreur lors du chargement des idées : ", error);
+            }
         }
 
         // Affichage initial des idées soumises
